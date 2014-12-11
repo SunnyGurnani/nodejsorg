@@ -1,0 +1,9 @@
+{
+	"name": "groups-api",
+	"main": "server.js",
+	"dependencies": {
+		"express": "*",
+		"mongoose": "*",
+		"body-parser": "*"
+	}
+}
