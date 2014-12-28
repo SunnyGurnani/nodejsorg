@@ -15,7 +15,7 @@ router.route('/:group_id')
 		console.log("Getting Group by id" + req.params.group_id);
 		Group
 			.findById(req.params.group_id)
-			.select({members : {$skip: 0, $limit: 10}})
+		
 			.exec(function(err, group)
 			{
 				if(err)
