@@ -1,0 +1,103 @@
+var express    = require('express'); 
+var router = express.Router();
+var User = require('../../login/models/user');
+var Group = require('../models/Group');
+var getUserFromHeader = require('../../../utils/get-user-from-header');
+var appConfig = require('../../../config/app-config');
+var Group_Members = require('../models/group_members');
+
+var userTokenMiddleware = require('../../../middlewares/validate-user-token');
+
+
+router.use(userTokenMiddleware);
+router.route('/:group_id')
+	.get(function(req, res)
+	{
+		console.log("Group Join Get");
+		getUserFromHeader(req, function(err, user)
+		{
+			if(err)
+			{
+				res.status(400);
+				res.send(err);
+				return;
+			}
+
+
+			Group_Members
+				.findOne({user_id: user._id, group_id: req.params.group_id})
+				.exec(function(err, group_member){
+					if(err)
+					{
+						res.status(500);
+						res.send(err);
+						return;
+					}
+
+					res.json(group_member);
+
+				});
+		});
+	})
+	.post(function(req,res)
+	{
+		console.log("Group Join Post");
+		var memberType = req.body.type;
+		var group_id = req.params.group_id;
+		getUserFromHeader(req, function(err, user)
+		{
+			if(err)
+			{
+				res.status(400);
+				res.send(err);
+				return;
+			}
+
+			Group_Members
+				.findOne({user_id : user._id, group_id: group_id})
+				.exec(function(err, group_member)
+				{
+						if(group_member)
+						{
+							group_member.type = memberType;
+							group_member.save(function(err)
+								{
+									if(err)
+									{
+										console.log("Error occured in updating existing Group_Member "+ err);
+										res.status(500);
+										res.send(err);
+										return;
+									}
+									res.json({msg: "Group Membership updated"});
+									return;
+								});
+						}
+						else
+						{
+							var group_member = new Group_Members();
+							group_member.user_id = user._id;
+							group_member.group_id = group_id;
+							group_member.type = memberType;
+							group_member.save(function(err){
+								if(err)
+								{
+									console.log("Error occured in saving new Group Mamber" + err);
+									res.status(500);
+									res.send(err);
+									return;
+								}
+								res.json({msg: "Member Added to Group"});
+
+							});
+						}
+				});
+
+			
+
+		});
+
+
+
+	});
+module.exports = router;
